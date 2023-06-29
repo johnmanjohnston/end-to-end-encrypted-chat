@@ -13,6 +13,7 @@ var privateKey = null;
 var publicKey = null;
 var recieverPublicKey = null;
 var roomPublicKeys = null;
+var otherSocketId = null;
 
 function delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -64,7 +65,7 @@ socket.on("msg", async (data) => {
     try {
         var decrypted = crypto.privateDecrypt(privateKey, message);
         decrypted = decrypted.toString();
-        console.log(`decrypt: ` + decrypted);
+        console.log(`${otherSocketId}: ${decrypted}`);
     } catch (e) {
         console.log("Recieved a message. Couldn't decrypt.");
     }
@@ -73,17 +74,27 @@ socket.on("msg", async (data) => {
 socket.on("public-key-transfer", (data) => {
     roomPublicKeys = data;
 
-    console.log(roomPublicKeys);
+    // console.log(roomPublicKeys);
 
     for (var id in roomPublicKeys) {
         if (id == socket.id) {
-          console.log(`${id} is my socket ID: ${socket.id}`); 
+          // console.log(`${id} is my socket ID: ${socket.id}`); 
           continue;
-        }
+        } else {
 
-        console.log(`My socket id is ${socket.id}, but I've detected ${id}`)
-        recieverPublicKey = roomPublicKeys[id]
+          // console.log(`My socket id is ${socket.id}, but I've detected ${id}`)
+          recieverPublicKey = roomPublicKeys[id]
+          otherSocketId = id;
+          console.log("Info: Recieved other client's public key\n");
+        }
     }
+});
+
+socket.on("user-disconnect", (userSocketID) => {
+  console.log(`\nInfo: ${userSocketID} disconnected.\n`);
+  recieverPublicKey = null;
+  roomPublicKeys = null;
+  otherSocketId = null;
 });
 
 var ROOM = "";
@@ -95,8 +106,10 @@ function promptUser() {
             process.exit(0);
         }
         
-        //readline.moveCursor(process.stdout, 0, -1);
-        //readline.clearLine(process.stdout, 0);
+        readline.moveCursor(process.stdout, 0, -1);
+        readline.clearLine(process.stdout, 0);
+
+        console.log(`${socket.id}: ${message}`)
 
         if (!recieverPublicKey) {
             console.log("Did not recieve reciever's public key");
@@ -120,6 +133,7 @@ rl.question("Room name: ", (roomname) => {
     setTimeout(() => {
         // console.log(`My public key: ${publicKey}`)
         socket.emit("join", { ROOM, publicKey });
+        console.log(`You are ${socket.id}`)
         promptUser();
     }, 5000)
 })

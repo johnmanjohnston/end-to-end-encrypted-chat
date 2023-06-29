@@ -29,11 +29,22 @@ io.on("connection", (socket) => {
 
         console.log(roomNameWithPublicKeys[ROOM])
 
-        setTimeout(() => {
+        if (Object.keys(roomNameWithPublicKeys[ROOM]).length > 1) {
             io.to(ROOM).emit("public-key-transfer", roomNameWithPublicKeys[ROOM])
             console.log(publicKey)
-        }, 3000)
+        }
         // io.to(ROOM).emit("msg", `Info: ${socket.id} joined ${ROOM}`)
+    });
+
+    socket.on("disconnect", () => {
+        console.log(`Disconnection from ${socket.id}`)
+        var roomname = rooms[socket.id];
+
+        io.to(roomname).emit("user-disconnect", socket.id);
+
+        rooms[socket.id] = null;
+        publicKeys[socket.id] = null;
+        delete roomNameWithPublicKeys[roomname][socket.id]
     });
 
     socket.on("msg", (data) => {
