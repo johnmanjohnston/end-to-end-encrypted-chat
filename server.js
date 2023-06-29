@@ -9,6 +9,7 @@ var keys = {};
 
 var keyPairs = {};
 var publicKeys = {};
+var roomNameWithPublicKeys = {};
 
 io.on("connection", (socket) => {
     console.log(`Incoming connection from ${socket.id}`);
@@ -20,14 +21,25 @@ io.on("connection", (socket) => {
         keys[socket.id] = crypto.randomBytes(32).toString("hex");
         console.log(`${socket.id} joined ${ROOM}`);
 
-        io.to(socket.id).emit("public-key-transfer", publicKey)
-        console.log(publicKey)
+        if (!roomNameWithPublicKeys[ROOM]) {
+            roomNameWithPublicKeys[ROOM] = {};
+        }
+        roomNameWithPublicKeys[ROOM][socket.id] = publicKey;
+        console.log(roomNameWithPublicKeys[ROOM].length);
+
+        console.log(roomNameWithPublicKeys[ROOM])
+
+        setTimeout(() => {
+            io.to(ROOM).emit("public-key-transfer", roomNameWithPublicKeys[ROOM])
+            console.log(publicKey)
+        }, 3000)
         // io.to(ROOM).emit("msg", `Info: ${socket.id} joined ${ROOM}`)
     });
 
     socket.on("msg", (data) => {
         const roomname = rooms[socket.id];
-        io.to(roomname).emit("msg", data)
+        // io.to(roomname).emit("msg", data)
+        socket.broadcast.to(roomname).emit("msg", data);
         console.log("Incoming data: " + data)
     });
 });

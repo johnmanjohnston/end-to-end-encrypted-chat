@@ -12,6 +12,7 @@ const rl = readline.createInterface({
 var privateKey = null;
 var publicKey = null;
 var recieverPublicKey = null;
+var roomPublicKeys = null;
 
 function delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -70,9 +71,19 @@ socket.on("msg", async (data) => {
 });
 
 socket.on("public-key-transfer", (data) => {
-    recieverPublicKey = data;
-    console.log("Recieved reciever's public key.")
-    console.log(data);
+    roomPublicKeys = data;
+
+    console.log(roomPublicKeys);
+
+    for (var id in roomPublicKeys) {
+        if (id == socket.id) {
+          console.log(`${id} is my socket ID: ${socket.id}`); 
+          continue;
+        }
+
+        console.log(`My socket id is ${socket.id}, but I've detected ${id}`)
+        recieverPublicKey = roomPublicKeys[id]
+    }
 });
 
 var ROOM = "";
@@ -107,7 +118,7 @@ rl.question("Room name: ", (roomname) => {
     
     generateClientKeys();   
     setTimeout(() => {
-        console.log(`My public key: ${publicKey}`)
+        // console.log(`My public key: ${publicKey}`)
         socket.emit("join", { ROOM, publicKey });
         promptUser();
     }, 5000)
