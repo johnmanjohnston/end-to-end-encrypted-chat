@@ -15,10 +15,6 @@ var recieverPublicKey = null;
 var roomPublicKeys = null;
 var otherSocketId = null;
 
-function delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-  
 function generateClientKeys() {
     return new Promise((resolve, reject) => {
       crypto.generateKeyPair(
@@ -45,22 +41,10 @@ function generateClientKeys() {
         }
       );
     });
-  }
-
-async function getKey(sender) {
-    var s = null;
-    
-    await axios.get(`http://localhost:3000/getkey/${sender}`).then((data) => {
-        s = data.data.key
-    }).catch( (e) => {} );
-
-    return s;
 }
 
 socket.on("msg", async (data) => {
     const message = data;
-
-    // console.log(privateKey)
 
     try {
         var decrypted = crypto.privateDecrypt(privateKey, message);
@@ -74,15 +58,11 @@ socket.on("msg", async (data) => {
 socket.on("public-key-transfer", (data) => {
     roomPublicKeys = data;
 
-    // console.log(roomPublicKeys);
-
     for (var id in roomPublicKeys) {
         if (id == socket.id) {
-          // console.log(`${id} is my socket ID: ${socket.id}`); 
           continue;
         } else {
 
-          // console.log(`My socket id is ${socket.id}, but I've detected ${id}`)
           recieverPublicKey = roomPublicKeys[id]
           otherSocketId = id;
           console.log("Info: Recieved other client's public key\n");
@@ -91,10 +71,15 @@ socket.on("public-key-transfer", (data) => {
 });
 
 socket.on("user-disconnect", (userSocketID) => {
-  console.log(`\nInfo: ${userSocketID} disconnected.\n`);
-  recieverPublicKey = null;
-  roomPublicKeys = null;
-  otherSocketId = null;
+	console.log(`\nInfo: ${userSocketID} disconnected.\n`);
+	recieverPublicKey = null;
+	roomPublicKeys = null;
+	otherSocketId = null;
+});
+
+socket.on("room-full", (data) => {
+	console.log(`${data} is full`);
+	process.exit(0);
 });
 
 var ROOM = "";
@@ -131,7 +116,6 @@ rl.question("Room name: ", (roomname) => {
     
     generateClientKeys();   
     setTimeout(() => {
-        // console.log(`My public key: ${publicKey}`)
         socket.emit("join", { ROOM, publicKey });
         console.log(`You are ${socket.id}`)
         promptUser();
