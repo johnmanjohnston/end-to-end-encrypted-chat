@@ -16,7 +16,7 @@ node client.js
 ```
 
 You'll then be prompted to enter a room name, then your username will be assigned as your socket ID. 
-After another user connects to the same room, both user's public keys will be stored and sent to each other, which are used to
+After another user connects to the same room, both users' public keys will be stored and sent to each other, which are used to
 encrypt messages. 
 
 To leave the room, enter `.exit`.
